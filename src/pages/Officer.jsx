@@ -18,67 +18,72 @@ export default function Officer() {
   }, []);
 
   const handleClick = () => {
-    if (!myData) return;
+  if (!myData) return;
 
-    let { batch, group, step, startTime } = myData;
-    const now = Date.now();
+  let { batch, group, step, startTime } = myData;
+  const now = Date.now();
 
-    // 🟡 MULAI (idle → proses)
-    if (step === 0) {
-      set(ref(db, `wahana/${key}`), {
-        batch,
-        group,
-        step: 1,
-        startTime: now
-      });
-      return;
-    }
+  // 🟡 idle → proses (START TIMER)
+  if (step === 0) {
+    set(ref(db, `wahana/${key}`), {
+      batch,
+      group,
+      step: 1,
+      startTime: now
+    });
+    return;
+  }
 
-    // 🟡 PROSES
-    if (step === 1) step = 2;
-    else if (step === 2) step = 3;
+  // 🔵 proses → selesai (TANPA STOP TIMER)
+  if (step === 1) {
+    set(ref(db, `wahana/${key}`), {
+      batch,
+      group,
+      step: 2,
+      startTime
+    });
+    return;
+  }
 
-    // 🔵 SELESAI (step 3 → idle)
-    else if (step === 3) {
-      const diffMs = now - startTime;
-      const totalSeconds = Math.floor(diffMs / 1000);
+  // 🟤 selesai → idle (STOP TIMER & LOG)
+  if (step === 2) {
+    const diffMs = now - startTime;
+    const totalSeconds = Math.floor(diffMs / 1000);
 
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
 
-      // simpan log
-      set(
-        ref(db, `logs/${key}/batch${batch}/group${group}`),
-        {
-          duration: { minutes, seconds }
-        }
-      );
-
-      // lanjut batch & group
-      step = 0;
-      group++;
-
-      if (group > 3) {
-        group = 1;
-        batch++;
+    // simpan log durasi
+    set(
+      ref(db, `logs/${key}/batch${batch}/group${group}`),
+      {
+        duration: { minutes, seconds }
       }
+    );
 
-      startTime = null;
+    // naik group / batch
+    group++;
+    if (group > 3) {
+      group = 1;
+      batch++;
     }
 
     set(ref(db, `wahana/${key}`), {
       batch,
       group,
-      step,
-      startTime
+      step: 0,
+      startTime: null
     });
-  };
+  }
+};
+
 
   const getColor = (step) => {
-    if (step === 3) return "bg-blue-500";
-    if (step > 0) return "bg-yellow-400";
-    return "bg-gray-400";
-  };
+  if (step === 2) return "bg-blue-500";
+  if (step === 1) return "bg-yellow-400";
+  return "bg-gray-400";
+};
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center px-4">
@@ -102,7 +107,6 @@ export default function Officer() {
                 className={`w-10 h-10 rounded-full flex items-center justify-center
                 text-sm font-bold text-black ${getColor(data?.step)}`}
               >
-                {data?.step > 0 && data.step}
               </div>
               <span className="text-[13px] mt-1 opacity-80 text-center">
                 {OFFICERS[i]}
@@ -118,7 +122,6 @@ export default function Officer() {
         className={`w-40 h-40 rounded-full flex items-center justify-center
         text-5xl font-bold text-black ${getColor(myData?.step)}`}
       >
-        {myData?.step > 0 && myData.step}
       </button>
 
       <p className="mt-6 text-xs opacity-60 text-center">
