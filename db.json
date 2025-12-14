@@ -1,11 +1,89 @@
 {
   "wahana": {
-    "wahana1": { "batch": 1, "group": 1, "step": 0 },
-    "wahana2": { "batch": 1, "group": 1, "step": 0 },
-    "wahana3": { "batch": 1, "group": 1, "step": 0 },
-    "wahana4": { "batch": 1, "group": 1, "step": 0 },
-    "wahana5": { "batch": 1, "group": 1, "step": 0 },
-    "wahana6": { "batch": 1, "group": 1, "step": 0 },
-    "wahana7": { "batch": 1, "group": 1, "step": 0 }
+    "wahana1": {
+      "officer": "Riyan x Rista",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana2": {
+      "officer": "Indah",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana3": {
+      "officer": "Sri",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana4": {
+      "officer": "Rizal x Delan",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana5": {
+      "officer": "Berril x Arni",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana6": {
+      "officer": "Rendi",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana7": {
+      "officer": "Rido",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    }
+  },
+
+  "logs": {
+    "wahana1": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 4, "seconds": 18 }
+        },
+        "group2": {
+          "duration": { "minutes": 5, "seconds": 2 }
+        },
+        "group3": {
+          "duration": { "minutes": 6, "seconds": 41 }
+        }
+      },
+      "batch2": {
+        "group1": {
+          "duration": { "minutes": 3, "seconds": 55 }
+        },
+        "group2": {
+          "duration": { "minutes": 7, "seconds": 9 }
+        },
+        "group3": {
+          "duration": { "minutes": 0, "seconds": 0 }
+        }
+      },
+      "batch3": {},
+      "batch4": {}
+    },
+
+    "wahana2": {},
+    "wahana3": {},
+    "wahana4": {},
+    "wahana5": {},
+    "wahana6": {},
+    "wahana7": {}
   }
 }
