@@ -27,7 +27,28 @@ export default function Monitor() {
     });
   }, []);
 
-  // 🔄 reset SEMUA batch, group, step, timing
+  // 🔽 KURANGI GROUP
+  const decreaseGroup = (key) => {
+    const data = wahana[key];
+    if (!data || data.group <= 1) return;
+
+    update(ref(db, `wahana/${key}`), {
+      group: data.group - 1,
+    });
+  };
+
+  // 🔽 KURANGI BATCH
+  const decreaseBatch = (key) => {
+    const data = wahana[key];
+    if (!data || data.batch <= 1) return;
+
+    update(ref(db, `wahana/${key}`), {
+      batch: data.batch - 1,
+      group: 1, // reset group agar aman
+    });
+  };
+
+  // 🔄 reset SEMUA
   const resetAll = () => {
     const updates = {};
 
@@ -44,16 +65,6 @@ export default function Monitor() {
     update(ref(db), updates);
     remove(ref(db, "logs"));
   };
-  const formatTime = (minutes, seconds) => {
-  if (minutes === "--" || seconds === "--") return "--:--";
-
-  return (
-    String(minutes).padStart(2, "0") +
-    ":" +
-    String(seconds).padStart(2, "0")
-  );
-};
-
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -62,29 +73,46 @@ export default function Monitor() {
       </h1>
 
       <div className="space-y-6">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
-          const wahanaLogs = logs[`wahana${i}`] || {};
+        {[1,2,3,4,5,6,7,8].map((i) => {
+          const key = `wahana${i}`;
+          const wahanaLogs = logs[key] || {};
+          const data = wahana[key];
 
           return (
             <div key={i} className="bg-gray-800 rounded-xl p-4">
-              <h2 className="font-bold text-lg mb-3 text-yellow-400">
+              <h2 className="font-bold text-lg mb-2 text-yellow-400">
                 {WAHANA[i]}
               </h2>
 
-              {[1, 2, 3, 4].map((batch) => (
+              {/* INFO AKTIF */}
+              {data && (
+                <p className="text-sm mb-3 text-gray-300">
+                  Aktif: Batch {data.batch} • Group {data.group}
+                </p>
+              )}
+
+              {/* LOG */}
+              {[1,2,3,4].map((batch) => (
                 <div key={batch} className="mb-2">
                   <div className="font-semibold text-sm mb-1">
                     Batch {batch}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    {[1, 2, 3].map((group) => {
+                    {[1,2,3].map((group) => {
                       const duration =
                         wahanaLogs?.[`batch${batch}`]?.[`group${group}`]
                           ?.duration;
 
-                      const minutes = duration?.minutes ?? "--";
-                      const seconds = duration?.seconds ?? "--";
+                      const minutes =
+                        duration?.minutes !== undefined
+                          ? String(duration.minutes).padStart(2, "0")
+                          : "--";
+
+                      const seconds =
+                        duration?.seconds !== undefined
+                          ? String(duration.seconds).padStart(2, "0")
+                          : "--";
 
                       return (
                         <div
@@ -94,21 +122,37 @@ export default function Monitor() {
                           Group {group}
                           <br />
                           <span className="text-yellow-300">
-                            {formatTime(minutes, seconds)}
+                            {minutes}:{seconds}
                           </span>
-
                         </div>
                       );
                     })}
                   </div>
                 </div>
               ))}
+
+              {/* 🔧 KONTROL MANUAL */}
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => decreaseGroup(key)}
+                  className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-bold"
+                >
+                  − Group
+                </button>
+
+                <button
+                  onClick={() => decreaseBatch(key)}
+                  className="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-xs font-bold"
+                >
+                  − Batch
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* RESET */}
+      {/* RESET SEMUA */}
       <div className="flex justify-center mt-8">
         <button
           onClick={resetAll}
