@@ -27,25 +27,7 @@ export default function Monitor() {
     });
   }, []);
 
-  // ❌ KURANGI BATCH (dipakai di tiap group)
-  const decreaseBatch = (key) => {
-  const data = wahana[key];
-  if (!data || data.batch <= 1) return;
-
-  const currentBatch = data.batch;
-
-  // 1️⃣ turunkan batch aktif
-  update(ref(db, `wahana/${key}`), {
-    batch: currentBatch - 1,
-    group: 1,
-  });
-
-  // 2️⃣ hapus log batch yang dikurangi
-  remove(ref(db, `logs/${key}/batch${currentBatch}`));
-};
-
-
-  // 🔄 reset semua
+  // 🔄 reset SEMUA batch, group, step, timing
   const resetAll = () => {
     const updates = {};
 
@@ -70,59 +52,43 @@ export default function Monitor() {
       </h1>
 
       <div className="space-y-6">
-        {[1,2,3,4,5,6,7,8].map((i) => {
-          const key = `wahana${i}`;
-          const wahanaLogs = logs[key] || {};
-          const data = wahana[key];
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+          const wahanaLogs = logs[`wahana${i}`] || {};
 
           return (
             <div key={i} className="bg-gray-800 rounded-xl p-4">
-              <h2 className="font-bold text-lg mb-2 text-yellow-400">
+              <h2 className="font-bold text-lg mb-3 text-yellow-400">
                 {WAHANA[i]}
               </h2>
 
-              {data && (
-                <p className="text-sm mb-3 text-gray-300">
-                  Aktif: Batch {data.batch} • Group {data.group}
-                </p>
-              )}
-
-              {[1,2,3,4].map((batch) => (
+              {[1, 2, 3, 4].map((batch) => (
                 <div key={batch} className="mb-2">
                   <div className="font-semibold text-sm mb-1">
                     Batch {batch}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    {[1,2,3].map((group) => {
+                    {[1, 2, 3].map((group) => {
                       const duration =
                         wahanaLogs?.[`batch${batch}`]?.[`group${group}`]
                           ?.duration;
 
                       const minutes =
-                        duration?.minutes !== undefined
+                        duration?.minutes != null
                           ? String(duration.minutes).padStart(2, "0")
                           : "--";
 
                       const seconds =
-                        duration?.seconds !== undefined
+                        duration?.seconds != null
                           ? String(duration.seconds).padStart(2, "0")
                           : "--";
+
 
                       return (
                         <div
                           key={group}
-                          className="relative bg-gray-700 rounded-md px-2 py-2 text-center"
+                          className="bg-gray-700 rounded-md px-2 py-1 text-center"
                         >
-                          {/* ❌ KURANGI BATCH */}
-                          <button
-                            onClick={() => decreaseBatch(key)}
-                            className="absolute top-1 right-1 text-red-400 hover:text-red-600 text-xs font-bold"
-                            title="Kurangi Batch"
-                          >
-                            ✕
-                          </button>
-
                           Group {group}
                           <br />
                           <span className="text-yellow-300">
@@ -139,6 +105,7 @@ export default function Monitor() {
         })}
       </div>
 
+      {/* RESET */}
       <div className="flex justify-center mt-8">
         <button
           onClick={resetAll}

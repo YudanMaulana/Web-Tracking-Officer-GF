@@ -1,0 +1,147 @@
+{
+  "wahana": {
+    "wahana1": {
+      "name": "Hologram",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana2": {
+      "name": "Train 1",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana3": {
+      "name": "Dream Farm",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana4": {
+      "name": "Space-X",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana5": {
+      "name": "Train 2",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana6": {
+      "name": "Tunel",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana7": {
+      "name": "Chamber AI & B.Gondola",
+      "batch": 2,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    },
+    "wahana8": {
+      "name": "Gondola",
+      "batch": 1,
+      "group": 1,
+      "step": 0,
+      "startTime": null
+    }
+  },
+
+  "logs": {
+    "wahana1": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 29, "seconds": 50 }
+        },
+        "group2": {
+          "duration": { "minutes": 9, "seconds": 51 }
+        }
+      }
+    },
+
+    "wahana2": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 5, "seconds": 5 }
+        },
+        "group2": {
+          "duration": { "minutes": 5, "seconds": 17 }
+        }
+      }
+    },
+
+    "wahana3": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 11, "seconds": 39 }
+        },
+        "group2": {
+          "duration": { "minutes": 12, "seconds": 10 }
+        },
+        "group3": {
+          "duration": { "minutes": 0, "seconds": 0 }
+        }
+      }
+    },
+
+    "wahana4": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 12, "seconds": 5 }
+        },
+        "group2": {
+          "duration": { "minutes": 11, "seconds": 39 }
+        },
+        "group3": {
+          "duration": { "minutes": 0, "seconds": 0 }
+        }
+      }
+    },
+
+    "wahana5": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 3, "seconds": 8 }
+        },
+        "group2": {
+          "duration": { "minutes": 3, "seconds": 20 }
+        }
+      }
+    },
+
+    "wahana6": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 8, "seconds": 10 }
+        },
+        "group2": {
+          "duration": { "minutes": 6, "seconds": 26 }
+        }
+      }
+    },
+
+    "wahana7": {
+      "batch1": {
+        "group1": {
+          "duration": { "minutes": 7, "seconds": 22 }
+        },
+        "group2": {
+          "duration": { "minutes": 8, "seconds": 50 }
+        }
+      }
+    },
+
+    "wahana8": {}
+  }
+}
