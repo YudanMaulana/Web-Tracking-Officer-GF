@@ -188,8 +188,8 @@ const handleClick = () => {
       </button>
 
       <p className="mt-6 text-xs opacity-60 text-center">
-        Bulatan atas hanya informasi<br />
-        Tombol ini hanya untuk wahana ini
+        Kalo salah klik don't panic ges<br />
+        pake tombol ini nanti ke abu lagi :"
       </p>
     </div>
   );
