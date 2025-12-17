@@ -43,66 +43,76 @@ export default function Officer() {
 
   // 🎨 warna status
   const getColor = (step) => {
-    if (step === 2) return "bg-blue-500";   // ready
-    if (step === 1) return "bg-yellow-400"; // proses
-    return "bg-gray-400";                  // idle
-  };
+  if (step === 2) return "bg-blue-500";   // READY
+  if (step === 1) return "bg-yellow-400"; // PROSES
+  return "bg-gray-400";                  // IDLE
+};
+
 
   // ▶️ klik tombol utama
-  const handleClick = () => {
-    if (!myData) return;
-
-    let { batch, group, step, startTime } = myData;
-
-    // idle → proses
-    if (step === 0) {
-      set(ref(db, `wahana/${key}`), {
-        ...myData,
-        step: 1,
-        startTime: Date.now(),
-      });
-      return;
-    }
-
-    // proses → ready
-    if (step === 1) {
-      set(ref(db, `wahana/${key}`), {
-        ...myData,
-        step: 2,
-      });
-      return;
-    }
-
-    // ready → idle (simpan durasi)
-    if (step === 2) {
-      const endTime = Date.now();
-      const diff = Math.floor((endTime - startTime) / 1000);
-      const minutes = Math.floor(diff / 60);
-      const seconds = diff % 60;
-
-      const logPath = `logs/${key}/batch${batch}/group${group}`;
-
-      update(ref(db, logPath), {
-        duration: { minutes, seconds },
-      });
-
-      let nextBatch = batch;
-      let nextGroup = group + 1;
-
-      if (nextGroup > 3) {
-        nextGroup = 1;
-        nextBatch++;
-      }
-
-      set(ref(db, `wahana/${key}`), {
-        ...myData,
-        batch: nextBatch,
-        group: nextGroup,
-        step: 0,
-        startTime: null,
-      });
-    }
+  const calcDuration = (start) => {
+  const diff = Math.floor((Date.now() - start) / 1000);
+  return {
+    minutes: Math.floor(diff / 60),
+    seconds: diff % 60
   };
+};
+
+const handleClick = () => {
+  if (!myData) return;
+
+  let {
+    batch,
+    group,
+    step,
+    startTime = null
+  } = myData;
+
+  const now = Date.now();
+
+  // IDLE → PROSES (KUNING, START TIMER)
+  if (step === 0) {
+    step = 1;
+    startTime = now;
+  }
+
+  // PROSES → READY (BIRU, STOP TIMER)
+  else if (step === 1) {
+    step = 2;
+
+    if (startTime !== null) {
+      const duration = calcDuration(startTime);
+      set(
+        ref(db, `logs/${key}/batch${batch}/group${group}`),
+        { duration }
+      );
+    }
+
+    startTime = null;
+  }
+
+  // READY → IDLE (NEXT GROUP)
+  else if (step === 2) {
+    step = 0;
+    group++;
+
+    if (group > 3) {
+      group = 1;
+      batch++;
+    }
+  }
+
+  set(ref(db, `wahana/${key}`), {
+    batch,
+    group,
+    step,
+    startTime
+  });
+};
+
+
+
+
 
   // 🔴 reset salah klik (hanya officer ini)
   const resetWrongClick = () => {
@@ -114,6 +124,9 @@ export default function Officer() {
       startTime: null,
     });
   };
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center px-4">

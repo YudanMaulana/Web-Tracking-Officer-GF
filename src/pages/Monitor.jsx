@@ -44,6 +44,16 @@ export default function Monitor() {
     update(ref(db), updates);
     remove(ref(db, "logs"));
   };
+  const formatTime = (minutes, seconds) => {
+  if (minutes === "--" || seconds === "--") return "--:--";
+
+  return (
+    String(minutes).padStart(2, "0") +
+    ":" +
+    String(seconds).padStart(2, "0")
+  );
+};
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -52,7 +62,7 @@ export default function Monitor() {
       </h1>
 
       <div className="space-y-6">
-        {[1,2,3,4,5,6,7,8].map((i) => {
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
           const wahanaLogs = logs[`wahana${i}`] || {};
 
           return (
@@ -61,14 +71,14 @@ export default function Monitor() {
                 {WAHANA[i]}
               </h2>
 
-              {[1,2,3,4].map((batch) => (
+              {[1, 2, 3, 4].map((batch) => (
                 <div key={batch} className="mb-2">
                   <div className="font-semibold text-sm mb-1">
                     Batch {batch}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    {[1,2,3].map((group) => {
+                    {[1, 2, 3].map((group) => {
                       const duration =
                         wahanaLogs?.[`batch${batch}`]?.[`group${group}`]
                           ?.duration;
@@ -84,8 +94,9 @@ export default function Monitor() {
                           Group {group}
                           <br />
                           <span className="text-yellow-300">
-                            {minutes}:{seconds}
+                            {formatTime(minutes, seconds)}
                           </span>
+
                         </div>
                       );
                     })}
