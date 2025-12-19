@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { ref, onValue, set, update, push, remove } from "firebase/database";
+import { ref, onValue, set } from "firebase/database";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 
@@ -33,7 +33,9 @@ export default function Officer() {
   const [allWahana, setAllWahana] = useState({});
   const myData = allWahana[key];
 
-  // 🔄 realtime listener
+  /* =========================
+      REALTIME LISTENER
+  ========================== */
   useEffect(() => {
     const unsub = onValue(ref(db, "wahana"), (snap) => {
       setAllWahana(snap.val() || {});
@@ -41,46 +43,46 @@ export default function Officer() {
     return () => unsub();
   }, []);
 
-  // 🎨 warna status
+  /* =========================
+      WARNA STATUS
+  ========================== */
   const getColor = (step) => {
     if (step === 2) return "bg-blue-500";   // READY
     if (step === 1) return "bg-yellow-400"; // PROSES
     return "bg-gray-400";                  // IDLE
   };
 
-
-  // ▶️ klik tombol utama
+  /* =========================
+      HITUNG DURASI
+  ========================== */
   const calcDuration = (start) => {
     const diff = Math.floor((Date.now() - start) / 1000);
     return {
       minutes: Math.floor(diff / 60),
-      seconds: diff % 60
+      seconds: diff % 60,
     };
   };
 
+  /* =========================
+      TOMBOL UTAMA
+  ========================== */
   const handleClick = () => {
     if (!myData) return;
 
-    let {
-      batch,
-      group,
-      step,
-      startTime = null
-    } = myData;
-
+    let { batch, group, step, startTime = null } = myData;
     const now = Date.now();
 
-    // IDLE → PROSES (KUNING, START TIMER)
+    // IDLE → PROSES
     if (step === 0) {
       step = 1;
       startTime = now;
     }
 
-    // PROSES → READY (BIRU, STOP TIMER)
+    // PROSES → READY (SIMPAN LOG)
     else if (step === 1) {
       step = 2;
 
-      if (startTime !== null) {
+      if (startTime) {
         const duration = calcDuration(startTime);
         set(
           ref(db, `logs/${key}/batch${batch}/group${group}`),
@@ -106,15 +108,36 @@ export default function Officer() {
       batch,
       group,
       step,
-      startTime
+      startTime,
     });
   };
 
+  /* =========================
+      PREVIOUS GROUP
+  ========================== */
+  const previousGroup = () => {
+    if (!myData) return;
 
+    let { batch, group } = myData;
 
+    group--;
+    if (group < 1) {
+      batch = Math.max(1, batch - 1);
+      group = 3;
+    }
 
+    set(ref(db, `wahana/${key}`), {
+      ...myData,
+      batch,
+      group,
+      step: 0,
+      startTime: null,
+    });
+  };
 
-  // 🔴 reset salah klik (hanya officer ini)
+  /* =========================
+      RESET SALAH KLIK
+  ========================== */
   const resetWrongClick = () => {
     if (!myData) return;
 
@@ -125,82 +148,9 @@ export default function Officer() {
     });
   };
 
-  // Handle previous
-const handlePrevious = async () => {
-  if (!myData || myData.step !== 0) return;
-
-  let { batch, group } = myData;
-
-  if (group > 1) {
-    group--;
-  } else if (batch > 1) {
-    batch--;
-    group = 3;
-  }
-
-  set(ref(db, `wahana/${key}`), {
-    ...myData,
-    batch,
-    group,
-    step: 0,
-    startTime: null,
-  });
-};
-// skip andle
-const handleSkipGroup = async () => {
-  if (!myData || myData.step !== 0) return;
-
-  const { batch, group } = myData;
-
-  await set(
-    ref(db, `logs/${key}/batch${batch}/group${group}`),
-    { skipped: true }
-  );
-
-  let nextBatch = batch;
-  let nextGroup = group + 1;
-
-  if (nextGroup > 3) {
-    nextGroup = 1;
-    nextBatch++;
-  }
-
-  set(ref(db, `wahana/${key}`), {
-    ...myData,
-    batch: nextBatch,
-    group: nextGroup,
-    step: 0,
-    startTime: null,
-  });
-};
-  //Skip Batch
-  const handleSkipBatch = async () => {
-  if (!myData || myData.step !== 0) return;
-
-  const { batch } = myData;
-
-  // tandai satu batch full di-skip
-  await set(
-    ref(db, `logs/${key}/batch${batch}`),
-    { skipped: true }
-  );
-
-  set(ref(db, `wahana/${key}`), {
-    ...myData,
-    batch: batch + 1,
-    group: 1,
-    step: 0,
-    startTime: null,
-  });
-};
-
-
-
-
-
-
-
-
+  /* =========================
+      UI
+  ========================== */
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center px-4">
 
@@ -209,34 +159,25 @@ const handleSkipGroup = async () => {
         {WAHANA[id]}
       </h1>
 
-      {/* BATCH & GROUP SENDIRI */}
+      {/* BATCH & GROUP */}
       {myData && (
         <p className="text-sm text-yellow-400 mb-8">
           Batch {myData.batch} • Group {myData.group}
         </p>
       )}
 
-      {/* 🔵 STATUS SEMUA WAHANA */}
+      {/* 🔵 STATUS 8 WAHANA */}
       <div className="grid grid-cols-4 gap-x-10 gap-y-6 mb-12">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+        {[1,2,3,4,5,6,7,8].map((i) => {
           const data = allWahana[`wahana${i}`];
-
           return (
             <div key={i} className="flex flex-col items-center text-center">
-
-              {/* batch & group */}
               {data && (
                 <div className="text-xs font-semibold text-yellow-400 mb-1">
                   Batch {data.batch} • Group {data.group}
                 </div>
               )}
-
-              {/* bulatan */}
-              <div
-                className={`w-10 h-10 rounded-full ${getColor(data?.step)}`}
-              />
-
-              {/* nama */}
+              <div className={`w-10 h-10 rounded-full ${getColor(data?.step)}`} />
               <span className="text-[13px] mt-1 opacity-80">
                 {WAHANA[i]}
               </span>
@@ -248,44 +189,29 @@ const handleSkipGroup = async () => {
       {/* 🔘 TOMBOL UTAMA */}
       <button
         onClick={handleClick}
-        className={`w-28 h-28 rounded-full ${getColor(myData?.step)}
-    flex items-center justify-center`}
+        className={`w-24 h-24 rounded-full mb-8 ${getColor(myData?.step)}`}
       />
-      <div className="flex gap-4 mt-6">
-        <div className="flex gap-4 mt-6">
+
+      <div className="flex gap-4 mb-6">
   <button
-    onClick={handlePrevious}
-    className="px-4 py-2 rounded-lg bg-gray-600 text-sm font-bold"
+    onClick={previousGroup}
+    className="px-6 py-2 h-10 rounded-lg bg-gray-600 text-sm font-bold"
   >
     Previous
   </button>
 
   <button
-    onClick={handleSkipBatch}
-    className="px-4 py-2 rounded-lg bg-orange-500 text-sm font-bold"
+    onClick={resetWrongClick}
+    className="px-6 py-2 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-bold"
   >
-    Skip Batch
-  </button>
-
-  <button
-    onClick={handleSkipGroup}
-    className="px-4 py-2 rounded-lg bg-yellow-500 text-sm font-bold"
-  >
-    Skip Group
+    Reset Salah Klik
   </button>
 </div>
 
-<button
-  onClick={resetWrongClick}
-  className="mt-4 px-6 py-2 rounded-xl bg-red-600 font-bold text-sm"
->
-  Reset Salah Klik
-</button>
 
-</div>
       <p className="mt-6 text-xs opacity-60 text-center">
-        Kalo salah klik don't panic ges<br />
-        pake tombol ini nanti ke abu lagi :"
+        Salah klik? tenang.<br />
+        Previous atau Reset aman 👍
       </p>
     </div>
   );

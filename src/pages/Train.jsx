@@ -52,7 +52,7 @@ export default function Train() {
   };
 
   /* =========================
-      LOGIC UTAMA
+      TOMBOL UTAMA
   ========================== */
   const handleClick = (key) => {
     const data = allWahana[key];
@@ -73,7 +73,6 @@ export default function Train() {
 
       if (startTime) {
         const duration = calcDuration(startTime);
-
         set(
           ref(db, `logs/${key}/batch${batch}/group${group}`),
           { duration }
@@ -103,7 +102,7 @@ export default function Train() {
   };
 
   /* =========================
-      PREVIOUS / SKIP
+      PREVIOUS GROUP
   ========================== */
   const previousGroup = (key) => {
     const data = allWahana[key];
@@ -126,40 +125,9 @@ export default function Train() {
     });
   };
 
-  const skipGroup = (key) => {
-    const data = allWahana[key];
-    if (!data) return;
-
-    let { batch, group } = data;
-
-    group++;
-    if (group > 3) {
-      group = 1;
-      batch++;
-    }
-
-    set(ref(db, `wahana/${key}`), {
-      ...data,
-      batch,
-      group,
-      step: 0,
-      startTime: null,
-    });
-  };
-
-  const skipBatch = (key) => {
-    const data = allWahana[key];
-    if (!data) return;
-
-    set(ref(db, `wahana/${key}`), {
-      ...data,
-      batch: data.batch + 1,
-      group: 1,
-      step: 0,
-      startTime: null,
-    });
-  };
-
+  /* =========================
+      RESET
+  ========================== */
   const resetWrongClick = (key) => {
     const data = allWahana[key];
     if (!data) return;
@@ -224,37 +192,22 @@ export default function Train() {
                 className={`w-24 h-24 rounded-full mx-auto mb-6 ${getColor(data?.step)}`}
               />
 
-              {/* ⏮️ ⏭️ ⏭️⏭️ */}
-              <div className="flex justify-center gap-4 mb-6">
-                <button
-                  onClick={() => previousGroup(key)}
-                  className="px-4 py-2 bg-gray-600 rounded-lg text-sm font-bold"
-                >
-                  Previous
-                </button>
 
-                <button
-                  onClick={() => skipBatch(key)}
-                  className="px-4 py-2 bg-orange-600 rounded-lg text-sm font-bold"
-                >
-                  Skip Batch
-                </button>
+              <div className="flex justify-center gap-4">
+  <button
+    onClick={() => previousGroup(key)}
+    className="px-4 py-2 h-10 bg-gray-600 rounded-lg text-sm font-bold"
+  >
+    Previous
+  </button>
 
-                <button
-                  onClick={() => skipGroup(key)}
-                  className="px-4 py-2 bg-yellow-500 text-black rounded-lg text-sm font-bold"
-                >
-                  Skip Group
-                </button>
-              </div>
-
-              {/* 🔴 RESET */}
-              <button
-                onClick={() => resetWrongClick(key)}
-                className="px-6 py-3 h-10 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-bold"
-              >
-                Reset Salah Klik
-              </button>
+  <button
+    onClick={() => resetWrongClick(key)}
+    className="px-4 py-2 h-10 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-bold"
+  >
+    Reset Salah Klik
+  </button>
+</div>
 
             </div>
           );

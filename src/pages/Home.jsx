@@ -17,9 +17,22 @@ export default function Home() {
         <Link to="/officer/8" className={btn}>Gondola</Link>
       </div>
 
-      <Link to="/monitor" className="mt-6 bg-blue-600 px-6 py-3 rounded font-bold">
-        MODE MONITOR
-      </Link>
+      <div className="flex gap-3 mt-6">
+        <Link
+          to="/monitor"
+          className="bg-blue-600 px-6 py-3 rounded font-bold text-center"
+        >
+          MODE MONITOR
+        </Link>
+
+        <Link
+          to="/developer"
+          className="bg-yellow-500 hover:bg-yellow-400 px-6 py-3 rounded font-bold text-black text-center"
+        >
+          DEVELOPER
+        </Link>
+      </div>
+
     </div>
   );
 }
