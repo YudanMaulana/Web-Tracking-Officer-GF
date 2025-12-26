@@ -100,44 +100,45 @@ export default function Monitor() {
                 {WAHANA[i]}
               </h2>
 
-              {[1,2,3,4].map((batch) => (
-                <div key={batch} className="mb-2">
-                  <div className="font-semibold text-sm mb-1">
-                    Batch {batch}
-                  </div>
+              {/* 🔁 BATCH 1–5 */}
+{[1,2,3,4,5].map((batch) => (
+  <div key={batch} className="mb-2">
+    <div className="font-semibold text-sm mb-1">
+      Batch {batch}
+    </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    {[1,2,3].map((group) => {
-                      const duration =
-                        wahanaLogs?.[`batch${batch}`]?.[`group${group}`]
-                          ?.duration;
+    <div className="grid grid-cols-3 gap-2 text-xs">
+      {[1,2,3].map((group) => {
+        const duration =
+          wahanaLogs?.[`batch${batch}`]?.[`group${group}`]?.duration;
 
-                      const minutes =
-                        duration?.minutes != null
-                          ? String(duration.minutes).padStart(2, "0")
-                          : "--";
+        const minutes =
+          duration?.minutes != null
+            ? String(duration.minutes).padStart(2, "0")
+            : "--";
 
-                      const seconds =
-                        duration?.seconds != null
-                          ? String(duration.seconds).padStart(2, "0")
-                          : "--";
+        const seconds =
+          duration?.seconds != null
+            ? String(duration.seconds).padStart(2, "0")
+            : "--";
 
-                      return (
-                        <div
-                          key={group}
-                          className="bg-gray-700 rounded-md px-2 py-1 text-center"
-                        >
-                          Group {group}
-                          <br />
-                          <span className="text-yellow-300">
-                            {minutes}:{seconds}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+        return (
+          <div
+            key={group}
+            className="bg-gray-700 rounded-md px-2 py-1 text-center"
+          >
+            Group {group}
+            <br />
+            <span className="text-yellow-300">
+              {minutes}:{seconds}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+))}
+
             </div>
           );
         })}
