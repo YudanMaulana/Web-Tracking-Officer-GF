@@ -35,24 +35,13 @@ export default function Train() {
   }, []);
 
   const getColor = (step) => {
-    if (step === 2) return "bg-blue-500";
-    if (step === 1) return "bg-yellow-400";
-    return "bg-gray-400";
+    if (step === 2) return "bg-blue-500";   // READY
+    if (step === 1) return "bg-yellow-400"; // PROSES
+    return "bg-gray-400";                  // IDLE
   };
 
   /* =========================
-      HITUNG DURASI
-  ========================== */
-  const calcDuration = (start) => {
-    const diff = Math.floor((Date.now() - start) / 1000);
-    return {
-      minutes: Math.floor(diff / 60),
-      seconds: diff % 60,
-    };
-  };
-
-  /* =========================
-      TOMBOL UTAMA
+      TOMBOL UTAMA (FIXED)
   ========================== */
   const handleClick = (key) => {
     const data = allWahana[key];
@@ -61,44 +50,57 @@ export default function Train() {
     let { batch, group, step, startTime = null } = data;
     const now = Date.now();
 
-    // IDLE → PROSES
+    // 0️⃣ ABU → KUNING (START TIMER)
     if (step === 0) {
-      step = 1;
-      startTime = now;
+      set(ref(db, `wahana/${key}`), {
+        ...data,
+        step: 1,
+        startTime: now,
+      });
+      return;
     }
 
-    // PROSES → READY (SIMPAN LOG)
-    else if (step === 1) {
-      step = 2;
+    // 1️⃣ KUNING → BIRU (TIMER MASIH JALAN)
+    if (step === 1) {
+      set(ref(db, `wahana/${key}`), {
+        ...data,
+        step: 2,
+        // startTime tetap
+      });
+      return;
+    }
 
+    // 2️⃣ BIRU → ABU (STOP TIMER + SIMPAN LOG)
+    if (step === 2) {
       if (startTime) {
-        const duration = calcDuration(startTime);
+        const diff = Math.floor((Date.now() - startTime) / 1000);
+
         set(
           ref(db, `logs/${key}/batch${batch}/group${group}`),
-          { duration }
+          {
+            duration: {
+              minutes: Math.floor(diff / 60),
+              seconds: diff % 60,
+            },
+          }
         );
       }
 
-      startTime = null;
-    }
-
-    // READY → IDLE (NEXT GROUP)
-    else if (step === 2) {
-      step = 0;
+      // NEXT GROUP
       group++;
-
       if (group > 3) {
         group = 1;
         batch++;
       }
-    }
 
-    set(ref(db, `wahana/${key}`), {
-      batch,
-      group,
-      step,
-      startTime,
-    });
+      set(ref(db, `wahana/${key}`), {
+        ...data,
+        batch,
+        group,
+        step: 0,
+        startTime: null,
+      });
+    }
   };
 
   /* =========================
@@ -126,7 +128,7 @@ export default function Train() {
   };
 
   /* =========================
-      RESET
+      RESET SALAH KLIK
   ========================== */
   const resetWrongClick = (key) => {
     const data = allWahana[key];
@@ -192,22 +194,21 @@ export default function Train() {
                 className={`w-24 h-24 rounded-full mx-auto mb-6 ${getColor(data?.step)}`}
               />
 
-
               <div className="flex justify-center gap-4">
-  <button
-    onClick={() => previousGroup(key)}
-    className="px-4 py-2 h-10 bg-gray-600 rounded-lg text-sm font-bold"
-  >
-    Previous
-  </button>
+                <button
+                  onClick={() => previousGroup(key)}
+                  className="px-4 py-2 h-10 bg-gray-600 rounded-lg text-sm font-bold"
+                >
+                  Previous
+                </button>
 
-  <button
-    onClick={() => resetWrongClick(key)}
-    className="px-4 py-2 h-10 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-bold"
-  >
-    Reset Salah Klik
-  </button>
-</div>
+                <button
+                  onClick={() => resetWrongClick(key)}
+                  className="px-4 py-2 h-10 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-bold"
+                >
+                  Reset Salah Klik
+                </button>
+              </div>
 
             </div>
           );

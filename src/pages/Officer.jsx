@@ -53,64 +53,87 @@ export default function Officer() {
   };
 
   /* =========================
-      HITUNG DURASI
+      STOP & SIMPAN TIMER
   ========================== */
-  const calcDuration = (start) => {
-    const diff = Math.floor((Date.now() - start) / 1000);
-    return {
-      minutes: Math.floor(diff / 60),
-      seconds: diff % 60,
-    };
+  const stopAndSave = (batch, group, startTime) => {
+    if (!startTime) return;
+
+    const diff = Math.floor((Date.now() - startTime) / 1000);
+
+    set(
+      ref(db, `logs/${key}/batch${batch}/group${group}`),
+      {
+        duration: {
+          minutes: Math.floor(diff / 60),
+          seconds: diff % 60,
+        },
+      }
+    );
   };
 
   /* =========================
       TOMBOL UTAMA
   ========================== */
   const handleClick = () => {
-    if (!myData) return;
+  if (!myData) return;
 
-    let { batch, group, step, startTime = null } = myData;
-    const now = Date.now();
+  let { batch, group, step, startTime = null } = myData;
+  const now = Date.now();
 
-    // IDLE → PROSES
-    if (step === 0) {
-      step = 1;
-      startTime = now;
+  // 0️⃣ ABU → KUNING (START TIMER)
+  if (step === 0) {
+    set(ref(db, `wahana/${key}`), {
+      ...myData,
+      step: 1,
+      startTime: now,
+    });
+    return;
+  }
+
+  // 1️⃣ KUNING → BIRU (TIMER MASIH JALAN)
+  if (step === 1) {
+    set(ref(db, `wahana/${key}`), {
+      ...myData,
+      step: 2,
+      // startTime TETAP
+    });
+    return;
+  }
+
+  // 2️⃣ BIRU → ABU (STOP TIMER + SIMPAN)
+  if (step === 2) {
+    if (startTime) {
+      const diff = Math.floor((Date.now() - startTime) / 1000);
+
+      set(
+        ref(db, `logs/${key}/batch${batch}/group${group}`),
+        {
+          duration: {
+            minutes: Math.floor(diff / 60),
+            seconds: diff % 60,
+          },
+        }
+      );
     }
 
-    // PROSES → READY (SIMPAN LOG)
-    else if (step === 1) {
-      step = 2;
-
-      if (startTime) {
-        const duration = calcDuration(startTime);
-        set(
-          ref(db, `logs/${key}/batch${batch}/group${group}`),
-          { duration }
-        );
-      }
-
-      startTime = null;
-    }
-
-    // READY → IDLE (NEXT GROUP)
-    else if (step === 2) {
-      step = 0;
-      group++;
-
-      if (group > 3) {
-        group = 1;
-        batch++;
-      }
+    // NEXT GROUP
+    group++;
+    if (group > 3) {
+      group = 1;
+      batch++;
     }
 
     set(ref(db, `wahana/${key}`), {
+      ...myData,
       batch,
       group,
-      step,
-      startTime,
+      step: 0,
+      startTime: null,
     });
-  };
+  }
+};
+
+
 
   /* =========================
       PREVIOUS GROUP
@@ -118,7 +141,12 @@ export default function Officer() {
   const previousGroup = () => {
     if (!myData) return;
 
-    let { batch, group } = myData;
+    let { batch, group, step, startTime } = myData;
+
+    // STOP jika masih PROSES
+    if (step === 1) {
+      stopAndSave(batch, group, startTime);
+    }
 
     group--;
     if (group < 1) {
@@ -140,6 +168,11 @@ export default function Officer() {
   ========================== */
   const resetWrongClick = () => {
     if (!myData) return;
+
+    // STOP jika masih PROSES
+    if (myData.step === 1) {
+      stopAndSave(myData.batch, myData.group, myData.startTime);
+    }
 
     set(ref(db, `wahana/${key}`), {
       ...myData,
@@ -192,22 +225,22 @@ export default function Officer() {
         className={`w-24 h-24 rounded-full mb-8 ${getColor(myData?.step)}`}
       />
 
+      {/* 🔁 PREV & RESET */}
       <div className="flex gap-4 mb-6">
-  <button
-    onClick={previousGroup}
-    className="px-6 py-2 h-10 rounded-lg bg-gray-600 text-sm font-bold"
-  >
-    Previous
-  </button>
+        <button
+          onClick={previousGroup}
+          className="px-6 py-2 h-10 rounded-lg bg-gray-600 text-sm font-bold"
+        >
+          Previous
+        </button>
 
-  <button
-    onClick={resetWrongClick}
-    className="px-6 py-2 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-bold"
-  >
-    Reset Salah Klik
-  </button>
-</div>
-
+        <button
+          onClick={resetWrongClick}
+          className="px-6 py-2 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-bold"
+        >
+          Reset Salah Klik
+        </button>
+      </div>
 
       <p className="mt-6 text-xs opacity-60 text-center">
         Salah klik? tenang.<br />
