@@ -30,10 +30,10 @@ const WAHANA = {
 ========================= */
 const TARGET_MINUTES = {
   1: 23, // Hologram
-  2: 9,  // Train 1
+  2: 5,  // Train 1
   3: 13, // Dream Farm
   4: 14, // Space-X
-  5: 9,  // Train 2
+  5: 4,  // Train 2
   6: 15, // Tunel
   7: 5,  // Chamber AI & B.Gondola
   8: 10, // Gondola

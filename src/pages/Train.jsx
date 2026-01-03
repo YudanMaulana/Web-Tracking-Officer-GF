@@ -1,20 +1,31 @@
-import { ref, onValue, update, remove } from "firebase/database";
+import { ref, onValue, set } from "firebase/database";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import {
-  MonitorIcon,
-  DownloadIcon,
-  ResetIcon,
+  TrainIcon,
+  PlayIcon,
+  PauseIcon,
+  StopIcon,
   ClockIcon,
+  ResetIcon,
+  ArrowLeftIcon,
   StatusActiveIcon,
   StatusIdleIcon,
   StatusReadyIcon,
 } from "../components/Icons";
 
-/* =========================
-   NAMA WAHANA
-========================= */
-const WAHANA = {
+/**
+ * Train:
+ * wahana2 = Train 1
+ * wahana5 = Train 2
+ */
+
+const TRAINS = {
+  wahana2: "Train 1",
+  wahana5: "Train 2",
+};
+
+const WAHANA_NAME = {
   1: "Hologram",
   2: "Train 1",
   3: "Dream Farm",
@@ -25,34 +36,57 @@ const WAHANA = {
   8: "Gondola",
 };
 
-/* =========================
-   TARGET MENIT
-========================= */
-const TARGET_MINUTES = {
-  1: 23, // Hologram
-  2: 5,  // Train 1
-  3: 13, // Dream Farm
-  4: 14, // Space-X
-  5: 4,  // Train 2
-  6: 15, // Tunel
-  7: 5,  // Chamber AI & B.Gondola
-  8: 10, // Gondola
-};
+export default function Train() {
+  const [allWahana, setAllWahana] = useState({});
+  const [liveTimers, setLiveTimers] = useState({});
 
-export default function Monitor() {
-  const [logs, setLogs] = useState({});
-  const [wahana, setWahana] = useState({});
-
+  /* =========================
+      REALTIME LISTENER
+  ========================== */
   useEffect(() => {
-    onValue(ref(db, "logs"), (snap) => {
-      setLogs(snap.val() || {});
+    const unsub = onValue(ref(db, "wahana"), (snap) => {
+      setAllWahana(snap.val() || {});
     });
-
-    onValue(ref(db, "wahana"), (snap) => {
-      setWahana(snap.val() || {});
-    });
+    return () => unsub();
   }, []);
 
+  /* =========================
+      LIVE TIMER (KUNING & BIRU)
+  ========================== */
+  useEffect(() => {
+    const intervals = {};
+
+    Object.keys(TRAINS).forEach((key) => {
+      const data = allWahana[key];
+
+      if (
+        (data?.step === 1 || data?.step === 2) &&
+        data.startTime
+      ) {
+        intervals[key] = setInterval(() => {
+          const diff = Math.floor((Date.now() - data.startTime) / 1000);
+          setLiveTimers((prev) => ({
+            ...prev,
+            [key]: {
+              minutes: Math.floor(diff / 60),
+              seconds: diff % 60,
+            },
+          }));
+        }, 1000);
+      } else {
+        setLiveTimers((prev) => ({
+          ...prev,
+          [key]: { minutes: 0, seconds: 0 },
+        }));
+      }
+    });
+
+    return () => Object.values(intervals).forEach(clearInterval);
+  }, [allWahana]);
+
+  /* =========================
+      WARNA STATUS
+  ========================== */
   const getColor = (step) => {
     if (step === 2) return "bg-blue-500";
     if (step === 1) return "bg-yellow-400";
@@ -60,50 +94,98 @@ export default function Monitor() {
   };
 
   /* =========================
-      RESET SEMUA
+      HITUNG DURASI FINAL
   ========================== */
-  const resetAll = () => {
-    const updates = {};
-    for (let i = 1; i <= 8; i++) {
-      updates[`wahana/wahana${i}`] = {
-        ...wahana[`wahana${i}`],
-        batch: 1,
-        group: 1,
-        step: 0,
-        startTime: null,
-      };
-    }
-    update(ref(db), updates);
-    remove(ref(db, "logs"));
+  const calcDuration = (start) => {
+    const diff = Math.floor((Date.now() - start) / 1000);
+    return {
+      minutes: Math.floor(diff / 60),
+      seconds: diff % 60,
+    };
   };
 
   /* =========================
-      DOWNLOAD CSV
+      FLOW TOMBOL UTAMA
+      Abu → Kuning (START)
+      Kuning → Biru (LANJUT)
+      Biru → Abu (STOP + LOG)
   ========================== */
-  const downloadCSV = () => {
-    let csv = "Wahana,Batch,Group,Menit,Detik\n";
+  const handleClick = (key) => {
+    const data = allWahana[key];
+    if (!data) return;
 
-    Object.keys(logs).forEach((wahanaKey) => {
-      const idx = wahanaKey.replace("wahana", "");
-      const name = WAHANA[idx];
+    let { batch, group, step, startTime = null } = data;
+    const now = Date.now();
 
-      Object.keys(logs[wahanaKey] || {}).forEach((batchKey) => {
-        Object.keys(logs[wahanaKey][batchKey] || {}).forEach((groupKey) => {
-          const d = logs[wahanaKey][batchKey][groupKey]?.duration;
-          if (d) {
-            csv += `${name},${batchKey.replace("batch","")},${groupKey.replace("group","")},${d.minutes},${d.seconds}\n`;
-          }
-        });
-      });
+    if (step === 0) {
+      step = 1;
+      startTime = now;
+    } 
+    else if (step === 1) {
+      step = 2;
+    } 
+    else if (step === 2) {
+      if (startTime) {
+        const duration = calcDuration(startTime);
+        set(ref(db, `logs/${key}/batch${batch}/group${group}`), { duration });
+      }
+
+      startTime = null;
+      step = 0;
+      group++;
+
+      if (group > 3) {
+        group = 1;
+        batch++;
+      }
+    }
+
+    set(ref(db, `wahana/${key}`), {
+      batch,
+      group,
+      step,
+      startTime,
     });
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "monitor_wahana.csv";
-    link.click();
   };
 
+  /* =========================
+      PREVIOUS & RESET
+  ========================== */
+  const previousGroup = (key) => {
+    const data = allWahana[key];
+    if (!data) return;
+
+    let { batch, group } = data;
+    group--;
+
+    if (group < 1) {
+      batch = Math.max(1, batch - 1);
+      group = 3;
+    }
+
+    set(ref(db, `wahana/${key}`), {
+      ...data,
+      batch,
+      group,
+      step: 0,
+      startTime: null,
+    });
+  };
+
+  const resetWrongClick = (key) => {
+    const data = allWahana[key];
+    if (!data) return;
+
+    set(ref(db, `wahana/${key}`), {
+      ...data,
+      step: 0,
+      startTime: null,
+    });
+  };
+
+  /* =========================
+      STATUS ICON
+  ========================== */
   const getStatusIcon = (step) => {
     if (step === 2) return <StatusReadyIcon className="w-5 h-5 text-white" />;
     if (step === 1) return <StatusActiveIcon className="w-5 h-5 text-black" />;
@@ -111,125 +193,103 @@ export default function Monitor() {
   };
 
   /* =========================
-      HITUNG SELISIH TARGET
+      UI
   ========================== */
-  const getDiff = (wahanaId, minutes) => {
-    const target = TARGET_MINUTES[wahanaId];
-    if (minutes == null) return null;
-    return minutes - target; // (+) lebih lama, (-) lebih cepat
-  };
-
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 md:p-6 safe-top safe-bottom">
+    <div className="min-h-screen bg-gray-900 text-white px-4 py-6">
 
       {/* HEADER */}
       <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <MonitorIcon className="w-8 h-8 text-yellow-400" />
-          <h1 className="text-2xl md:text-3xl font-bold text-yellow-400">
-            Monitor Progress Wahana
+        <div className="flex justify-center items-center gap-2">
+          <TrainIcon className="w-8 h-8 text-yellow-400" />
+          <h1 className="text-2xl font-bold text-yellow-400">
+            Monitor Train
           </h1>
         </div>
         <p className="text-sm text-gray-400">
-          Perbandingan waktu aktual vs target
+          Kontrol Train 1 & Train 2
         </p>
       </div>
 
-      {/* STATUS BULATAN */}
-      <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-10">
+      {/* STATUS 8 WAHANA */}
+      <div className="grid grid-cols-4 gap-4 mb-10">
         {[1,2,3,4,5,6,7,8].map((i) => {
-          const data = wahana[`wahana${i}`];
+          const data = allWahana[`wahana${i}`];
           return (
             <div key={i} className="flex flex-col items-center text-center">
+              {data && (
+                <div className="text-[10px] text-yellow-400 mb-1">
+                  B{data.batch} • G{data.group}
+                </div>
+              )}
               <div className={`w-10 h-10 rounded-full ${getColor(data?.step)} flex items-center justify-center`}>
                 {getStatusIcon(data?.step)}
               </div>
-              <span className="text-xs text-yellow-400 mt-2">{WAHANA[i]}</span>
-              {data && (
-                <span className="text-[10px] text-yellow-300">
-                  B{data.batch} • G{data.group}
-                </span>
-              )}
+              <span className="text-[11px] mt-1 opacity-80">
+                {WAHANA_NAME[i]}
+              </span>
             </div>
           );
         })}
       </div>
 
-      {/* LIST TIMING */}
-      <div className="space-y-6 mb-10">
-        {[1,2,3,4,5,6,7,8].map((i) => {
-          const wahanaLogs = logs[`wahana${i}`] || {};
+      {/* TRAIN PANEL */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        {Object.keys(TRAINS).map((key) => {
+          const data = allWahana[key];
+          const time = liveTimers[key] || { minutes: 0, seconds: 0 };
+
           return (
-            <div key={i} className="bg-gray-800 rounded-xl p-4">
-              <h2 className="text-yellow-400 font-bold mb-4">
-                {WAHANA[i]} (Target {TARGET_MINUTES[i]} m)
+            <div key={key} className="bg-gray-800 rounded-xl p-6 text-center">
+
+              <h2 className="text-lg font-bold text-yellow-400 mb-1">
+                {TRAINS[key]}
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {[1,2,3,4,5].map((batch) => (
-                  <div key={batch} className="bg-gray-700 rounded-lg p-3">
-                    <div className="text-blue-400 font-semibold mb-2">
-                      Batch {batch}
-                    </div>
+              {data && (
+                <p className="text-sm mb-6 text-gray-300">
+                  Batch {data.batch} • Group {data.group}
+                </p>
+              )}
 
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      {[1,2,3].map((group) => {
-                        const d = wahanaLogs?.[`batch${batch}`]?.[`group${group}`]?.duration;
-                        const m = d?.minutes;
-                        const s = d?.seconds;
-                        const diff = getDiff(i, m);
-
-                        return (
-                          <div key={group} className="bg-gray-600 rounded-md p-2 text-center">
-                            <div className="text-gray-400 mb-1">G{group}</div>
-
-                            {d ? (
-                              <div className="flex items-center justify-between font-mono font-bold">
-                                {/* LEBIH CEPAT */}
-                                <span className="text-green-400 text-[10px]">
-                                  {diff < 0 ? `${Math.abs(diff)}m` : ""}
-                                </span>
-
-                                {/* AKTUAL */}
-                                <span className="text-yellow-300">
-                                  {String(m).padStart(2,"0")}:
-                                  {String(s).padStart(2,"0")}
-                                </span>
-
-                                {/* LEBIH LAMA */}
-                                <span className="text-red-400 text-[10px]">
-                                  {diff > 0 ? `+${diff}m` : ""}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">--:--</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+              {/* MAIN BUTTON */}
+              <button
+                onClick={() => handleClick(key)}
+                className={`w-32 h-32 rounded-full mx-auto mb-6 flex items-center justify-center shadow-xl ${getColor(data?.step)}`}
+              >
+                {(data?.step === 1 || data?.step === 2) ? (
+                  <div className="flex flex-col items-center">
+                    <ClockIcon className={`w-6 h-6 ${data.step === 2 ? "text-white" : "text-black"}`} />
+                    <span className={`text-xl font-mono font-bold ${data.step === 2 ? "text-white" : "text-black"}`}>
+                      {String(time.minutes).padStart(2,"0")}:
+                      {String(time.seconds).padStart(2,"0")}
+                    </span>
                   </div>
-                ))}
+                ) : (
+                  <PlayIcon className="w-10 h-10 text-gray-600" />
+                )}
+              </button>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => previousGroup(key)}
+                  className="flex-1 py-2 bg-gray-600 rounded-lg font-bold"
+                >
+                  <ArrowLeftIcon className="inline w-4 h-4 mr-1" />
+                  Previous
+                </button>
+
+                <button
+                  onClick={() => resetWrongClick(key)}
+                  className="flex-1 py-2 bg-red-600 rounded-lg font-bold"
+                >
+                  <ResetIcon className="inline w-4 h-4 mr-1" />
+                  Reset
+                </button>
               </div>
             </div>
           );
         })}
-      </div>
-
-      {/* ACTION */}
-      <div className="flex gap-4 max-w-md mx-auto">
-        <button
-          onClick={downloadCSV}
-          className="flex-1 bg-green-600 py-3 rounded-xl font-bold"
-        >
-          Unduh Data
-        </button>
-        <button
-          onClick={resetAll}
-          className="flex-1 bg-red-600 py-3 rounded-xl font-bold"
-        >
-          Reset Semua
-        </button>
       </div>
     </div>
   );
