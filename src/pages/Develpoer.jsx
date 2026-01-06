@@ -52,15 +52,29 @@ export default function Developer() {
   /* =========================
       HAPUS DATA BATCH & GROUP
   ========================== */
-  const deleteBatchGroup = () => {
-    const data = allWahana[selected];
-    if (!data) return;
+  /* =========================
+      HAPUS DATA BATCH & GROUP
+========================== */
+const deleteBatchGroup = () => {
+  const data = allWahana[selected];
+  if (!data) return;
 
-    // Hapus data batch & group yang dipilih
-    update(ref(db, `wahana/${selected}/batch${batch}/group${group}`), {
-      duration: null, // Menghapus data waktu
+  // Menghapus data durasi (menit dan detik) untuk batch dan group yang dipilih
+  const pathToDuration = `logs/${selected}/batch${batch}/group${group}/duration`;
+
+  // Menghapus data waktu
+  update(ref(db, pathToDuration), {
+    minutes: null, // Menghapus data waktu
+    seconds: null,
+  })
+    .then(() => {
+      console.log('Data waktu berhasil dihapus');
+    })
+    .catch((error) => {
+      console.error('Gagal menghapus data waktu:', error);
     });
-  };
+};
+
 
   /* =========================
       SET MENIT & DETIK MANUAL

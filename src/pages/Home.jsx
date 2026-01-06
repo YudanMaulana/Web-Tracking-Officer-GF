@@ -3,13 +3,13 @@ import Logo from "../assets/logo.png";
 import { MonitorIcon, SettingsIcon, TrainIcon, HomeIcon } from "../components/Icons";
 
 const wahanaCards = [
-  { id: 1, name: "Hologram", path: "/officer/1", icon: "🎭" },
+  { id: 1, name: "Hologram", path: "/officer/1", icon: "🤖" },
   { id: "train", name: "Train 1 & 2", path: "/officer/train", icon: "🚆" },
-  { id: 3, name: "Dream Farm", path: "/officer/3", icon: "🚜" },
+  { id: 3, name: "Dream Farm", path: "/officer/3", icon: "🐮" },
   { id: 4, name: "Space-X", path: "/officer/4", icon: "🚀" },
-  { id: 6, name: "Tunel", path: "/officer/6", icon: "🌉" },
-  { id: 7, name: "Chamber AI", path: "/officer/7", icon: "🤖" },
-  { id: 8, name: "Gondola", path: "/officer/8", icon: "🎡" },
+  { id: 6, name: "Tunel", path: "/officer/6", icon: "📖" },
+  { id: 7, name: "Chamber AI", path: "/officer/7", icon: "🖼️" },
+  { id: 8, name: "Gondola", path: "/officer/8", icon: "🚢" },
 ];
 
 export default function Home() {
