@@ -1,19 +1,10 @@
 import { ref, onValue, update, remove } from "firebase/database";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import {
-  MonitorIcon,
-  DownloadIcon,
-  ResetIcon,
-  ClockIcon,
-  StatusActiveIcon,
-  StatusIdleIcon,
-  StatusReadyIcon,
-} from "../components/Icons";
+import { MonitorIcon, DownloadIcon, ResetIcon, ClockIcon, StatusActiveIcon, StatusIdleIcon, StatusReadyIcon } from "../components/Icons";
+import { useNavigate } from "react-router-dom"; // Tambahkan import useNavigate
 
-/* =========================
-   NAMA WAHANA
-========================= */
+// NAMA WAHANA
 const WAHANA = {
   1: "Hologram",
   2: "Train 1",
@@ -25,9 +16,7 @@ const WAHANA = {
   8: "Gondola",
 };
 
-/* =========================
-   TARGET MENIT
-========================= */
+// TARGET MENIT
 const TARGET_MINUTES = {
   1: 23, // Hologram
   2: 5,  // Train 1
@@ -42,6 +31,8 @@ const TARGET_MINUTES = {
 export default function Monitor() {
   const [logs, setLogs] = useState({});
   const [wahana, setWahana] = useState({});
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate(); // Inisialisasi useNavigate
 
   useEffect(() => {
     onValue(ref(db, "logs"), (snap) => {
@@ -59,9 +50,7 @@ export default function Monitor() {
     return "bg-gray-400";                  // IDLE
   };
 
-  /* =========================
-      RESET SEMUA
-  ========================== */
+  // RESET SEMUA
   const resetAll = () => {
     const updates = {};
     for (let i = 1; i <= 8; i++) {
@@ -77,9 +66,7 @@ export default function Monitor() {
     remove(ref(db, "logs"));
   };
 
-  /* =========================
-      DOWNLOAD CSV
-  ========================== */
+  // DOWNLOAD CSV
   const downloadCSV = () => {
     let csv = "Wahana,Batch,Group,Menit,Detik\n";
 
@@ -110,9 +97,7 @@ export default function Monitor() {
     return <StatusIdleIcon className="w-5 h-5" />;
   };
 
-  /* =========================
-      HITUNG SELISIH TARGET
-  ========================== */
+  // HITUNG SELISIH TARGET
   const getDiff = (wahanaId, minutes) => {
     const target = TARGET_MINUTES[wahanaId];
     if (minutes == null) return null;
@@ -121,7 +106,6 @@ export default function Monitor() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4 md:p-6 safe-top safe-bottom">
-
       {/* HEADER */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-3 mb-2">
