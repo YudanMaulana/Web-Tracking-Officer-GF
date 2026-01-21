@@ -1,5 +1,7 @@
 # 🚦 Officer Progress
 
+![Officer Progress Preview](./docs/preview.png)
+
 Aplikasi web **Officer Progress** adalah sistem monitoring dan kontrol operasional wahana berbasis **React + Firebase Realtime Database** yang dirancang untuk kebutuhan operator (officer), monitor, dan developer.
 
 Aplikasi ini digunakan untuk:
