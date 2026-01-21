@@ -15,8 +15,8 @@ const WAHANA_LIST = {
   wahana4: "Space-X",
   wahana5: "Train 2",
   wahana6: "Tunel",
-  wahana7: "Chamber AI & B.Gondola",
-  wahana8: "Gondola",
+  wahana7: "Chamber AI ",
+  wahana8: " B.Gondola & Gondola",
 };
 
 export default function Developer() {
